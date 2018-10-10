@@ -37,22 +37,11 @@ for iL=1:length(names)
     if rerun && runMask(iL)
         delete([names{iL},'.mat']);
         delete([names{iL},'.BIN']);
-        runCase(names{iL}, params{iL});
+        log=runCase(names{iL}, params{iL});
+        Logs(iL) = log;
+    else
+        Logs(iL) = load([names{iL},'.mat']);
     end
-end
-
-clear Logs;
-for iL=1:length(names)
-    wait=false;
-    while rerun && ~exist([names{iL},'.mat'],'file')
-        pause(1);
-        wait=true;
-    end
-    if wait
-        pause(1);
-    end
-    pause(2);
-    Logs(iL) = load([names{iL},'.mat']);
 end
 
 thermal.pos = [-180,-260];
@@ -139,7 +128,5 @@ plot(Logs(1).SOAR.Time, sqrt((Logs(1).SOAR.estPosE-Logs(1).SOAR.posE).^2 + (Logs
 plot(Logs(2).SOAR.Time, sqrt((Logs(2).SOAR.estPosE-Logs(2).SOAR.posE).^2 + (Logs(2).SOAR.estPosN-Logs(2).SOAR.posN).^2))
 xlabel('Time [s]'); ylabel('Circling radius [m]');
 
-
-PlotLogs(Logs,'SIM2','ay');
 
 PlotLogs(Logs,'AETR','Elev');

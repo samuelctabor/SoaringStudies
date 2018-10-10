@@ -18,7 +18,11 @@ function logs=TrimLog(logs,endTimes)
                 for iF2=1:length(fields2)
                     field2=fields2{iF2};
                     
-                    logs(i).(field).(field2) = logs(i).(field).(field2)(idx);
+                    if strcmp(field2,'typeNumID') || strcmp(field2,'name')
+                        logs(i).(field).(field2) = logs(i).(field).(field2);
+                    else
+                        logs(i).(field).(field2) = logs(i).(field).(field2)(idx);
+                    end
                 end
             end
         end

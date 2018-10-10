@@ -1,4 +1,4 @@
-function runCase(name, params)
+function Log=runCase(name, params)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
     
@@ -45,9 +45,10 @@ function runCase(name, params)
     fclose(fid);
     
     
-    logName = sprintf('%08i.BIN',log_ID);
-    fprintf('Moving %s to %s ...\n',[ardupilotDir,'/logs/',logName],[name,'.BIN']);
-    movefile([ardupilotDir,'/logs/',logName],[name,'.BIN']);
-    system(['LD_LIBRARY_PATH= ','bin_to_mat.py ', [name,'.BIN'], ' > /dev/null 2>&1 &']);
+    logName = sprintf('%s/logs/%08i.BIN',ardupilotDir,log_ID);
+    
+    log = Ardupilog(logName);
+    Log = log.getStruct();
+    save([name,'.mat'],'-struct','Log');
 end
 
