@@ -1,12 +1,28 @@
 close all;
+clear Logs;
 
-names = {'POMDP_off_15s','POMDP_off_10s','POMDP_on_2s','POMDP_on_3s','POMDP_on_4s'};
+names = {'POMDP_off_10m','POMDP_off_15m','POMDP_on_2s','POMDP_on_3s','POMDP_on_4s'};
 % names = {'POMDP_off_weak','POMDP_on1_weak','POMDP_on2_weak'};
 params = {struct('SOAR_VSPEED',0.7, 'SOAR_POMD_ENABLE',0.0,'WP_LOITER_RAD',10.0,'NAVL1_PERIOD',10.0),...
           struct('SOAR_VSPEED',0.7, 'SOAR_POMD_ENABLE',0.0,'WP_LOITER_RAD',15.0,'NAVL1_PERIOD',10.0),...
           struct('SOAR_VSPEED',0.7, 'SOAR_POMD_ENABLE',1.0,'SOAR_POMD_HORI',2.0,'SOAR_POMD_LOOP',100000,'SOAR_POMD_N_ACT',10,'SOAR_POMD_EXT',3.0),...
           struct('SOAR_VSPEED',0.7, 'SOAR_POMD_ENABLE',1.0,'SOAR_POMD_HORI',3.0,'SOAR_POMD_LOOP',100000,'SOAR_POMD_N_ACT',10,'SOAR_POMD_EXT',3.0),...
           struct('SOAR_VSPEED',0.7, 'SOAR_POMD_ENABLE',1.0,'SOAR_POMD_HORI',4.0,'SOAR_POMD_LOOP',100000,'SOAR_POMD_N_ACT',10,'SOAR_POMD_EXT',3.0)};
+
+% Variants.
+if (3)
+    nV=3;
+    for iL=1:length(names)
+        for iV=1:nV
+            names2{iL,iV} = [names{iL},'_',num2str(iV)];
+            params2{iL,iV}= params{iL};
+        end
+    end
+    names = names2(:);
+    params = params2(:);
+    [names,idx] = sort(names);
+    params = params(idx);
+end
 
 % names = {'R20','R30'};
 % params = {struct('SOAR_POMD_ENABLE',0.0,'WP_LOITER_RAD',20.0),...
