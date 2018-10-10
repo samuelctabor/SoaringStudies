@@ -37,8 +37,8 @@ function h = PlotLogs(logs, category, fields, lineTypes, names, ylabels)
                     field=field(2:end);
                 end
             end     
-            
-            h(end+1)=plot(logs(iL).(category{iF}).Time,mult*logs(iL).(category{iF}).(field),'Color',colors(iL,:),'LineStyle',lineTypes{iF});
+            iC=mod(iL-1,length(colors))+1;
+            h(end+1)=plot(logs(iL).(category{iF}).Time,mult*logs(iL).(category{iF}).(field),'Color',colors(iC,:),'LineStyle',lineTypes{iF});
         end
     end
     
