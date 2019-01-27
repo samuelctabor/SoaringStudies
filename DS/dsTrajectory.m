@@ -14,8 +14,10 @@ params.m = 8.5;
 params.alpha = -2.5:0.1:20;
 al = [-2.5, 0.0,  2.5, 5.5,  8.2,  12,  13,  20];
 cl = [1.8*pi*deg2rad(al(1:6))+0.5,      1.6, 0.7];
+cd = 0.033 + (1.8*pi*deg2rad(al)+0.5).^2/(pi*1.0*16.81);
 params.CL    = interp1(al,cl, params.alpha,'spline','extrap');
-params.CD    = 0.033 + params.CL.^2/(pi*1.0*16.81);
+params.CD    = interp1(al,cd, params.alpha,'spline','extrap');
+% params.CD    = 0.033 + params.CL.^2/(pi*1.0*16.81);
 params.S = 0.65;
 
 
@@ -25,7 +27,6 @@ z0 = 0.03;
 
 % Wind as function of height.
 windFunc = @(x,y,z) [0*x; -Uref*log(z/z0)/log(10/z0); 0*z];
-% wind = @(x,y,z) [0*x; -Uref*z/10; 0*z];
 
 % Use basis functions to construct a trajectory in terms of the differentially
 % flat outputs x, y, z.
@@ -37,12 +38,12 @@ N=5;
 M = 1000;
 t = linspace(0,7,M);
 
-traj.ax = zeros(N,1);
-traj.ay = zeros(N,1);
-traj.az = zeros(N,1);
-traj.bx = zeros(N,1);
-traj.by = zeros(N,1);
-traj.bz = zeros(N,1);
+traj_zero.ax = zeros(N,1);
+traj_zero.ay = zeros(N,1);
+traj_zero.az = zeros(N,1);
+traj_zero.bx = zeros(N,1);
+traj_zero.by = zeros(N,1);
+traj_zero.bz = zeros(N,1);
 %
 % inclined circle
 % traj.ax(1) = 5;
@@ -76,11 +77,15 @@ conditions.rho  = 1.225;
     dsSoarBackend(t,windFunc,traj,params,conditions);
 
 % Number of bases that are optimised.
-nb = 2;
+% nb = 2;
+nb = N;
+
+traj_init = traj;
+traj_init.Vnet = 15.0;
 
 % Set up a function that allows the parameters to be changed.
 function [cost, trajMod,Ct]=searchFunc(x)
-    trajMod=traj;
+    trajMod=traj_init;
     trajMod.ax(1:nb) = x(nb*0 + (1:nb));
     trajMod.ay(1:nb) = x(nb*1 + (1:nb));
     trajMod.az(1:nb) = x(nb*2 + (1:nb));
@@ -91,12 +96,12 @@ function [cost, trajMod,Ct]=searchFunc(x)
 end
 
 % Optimise variables in turn for minimum thrust residual.
-x0 = [traj.ax(1:nb).*(1 + 0.1*randn(nb,1)),...
-      traj.ay(1:nb).*(1 + 0.1*randn(nb,1)),...
-      traj.az(1:nb).*(1 + 0.1*randn(nb,1)),....
-      traj.bx(1:nb).*(1 + 0.1*randn(nb,1)),...
-      traj.by(1:nb).*(1 + 0.1*randn(nb,1)),...
-      traj.bz(1:nb).*(1 + 0.1*randn(nb,1))];
+x0 = [traj_init.ax(1:nb).*(1 + 0.0*randn(nb,1)),...
+      traj_init.ay(1:nb).*(1 + 0.0*randn(nb,1)),...
+      traj_init.az(1:nb).*(1 + 0.0*randn(nb,1)),....
+      traj_init.bx(1:nb).*(1 + 0.0*randn(nb,1)),...
+      traj_init.by(1:nb).*(1 + 0.0*randn(nb,1)),...
+      traj_init.bz(1:nb).*(1 + 0.0*randn(nb,1))];
 
 [~,trajInit] = searchFunc(x0);
 [E_init, CL_init, CD_init, CT_init,x_init,y_init,z_init] = ...
@@ -138,7 +143,7 @@ figure,plot(t,CL,t,CD,t,CT);
 hold on; set(gca,'ColorOrderIndex',1);
 plot(t,CL_val,t,CD_val, t, CT_val,'LineStyle','--')
 xlabel('Time [s]');
-legend('Lift','Drag','Thrust')
+legend('Lift (opt)','Drag (opt)','Thrust (opt)','Lift (val)','Drag (val)','Thrust (val)')
 grid on; grid minor;
 
 figure;

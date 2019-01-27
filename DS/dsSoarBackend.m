@@ -91,11 +91,12 @@ function [thrustPower, CL, CD, CT, x, y, z, vx, vy, vz, psi, roll, vectorData] =
 %     thrustPower = trapz(t,(qS.*CT.^2.*norm2(V_rel)));
     CT_int = CT;
     
+    % CT is used as cost function. Add penalty for violating CLmax and
+    % CLmin constraints.
     CLmax = 1.52;
-%     CLmax=max(params.CL);
     CLmin = min(params.CL);
     idx = CL>CLmax | CL<CLmin;
-    CT_int(idx) = 10*max(CL(idx)-CLmax,0) + 10*max(CLmin-CL(idx),0);
+    CT_int(idx) = 10*(max(CL(idx)-CLmax,0)).^2 + 10*(max(CLmin-CL(idx),0)).^2;
     
     thrustPower = trapz(t,(qS.*CT_int.*norm2(V_rel)).^2);
     
