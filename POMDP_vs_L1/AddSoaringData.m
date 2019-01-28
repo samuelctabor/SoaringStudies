@@ -2,6 +2,10 @@ function logs=AddSoaringData(logs, thermal)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
+    if nargin<2 || isempty(thermal)
+        thermal.pos = [NaN, NaN];
+    end
+    
     for i=1:length(logs)
         logs(i).SOAR.posN = interp1(logs(i).NKF1.TimeUS, logs(i).NKF1.PN, logs(i).SOAR.TimeUS);
         logs(i).SOAR.posE = interp1(logs(i).NKF1.TimeUS, logs(i).NKF1.PE, logs(i).SOAR.TimeUS);
