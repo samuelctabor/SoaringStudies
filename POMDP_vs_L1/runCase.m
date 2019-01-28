@@ -9,7 +9,7 @@ function Log=runCase(name, params)
     
 %     cmd = sprintf('sim_vehicle.py -f plane --speedup %i -GDB "AP_L1_Control.cpp:437"', speedUp);
 %     cmd = sprintf('sim_vehicle.py -f plane --speedup %i -GDB "Attitude.cpp:573"', speedUp);
-    cmd = sprintf('sim_vehicle.py -f plane --speedup %i', speedUp);
+    cmd = sprintf('sim_vehicle.py -f plane --aircraft POMDP_vs_L1 -w -GD --add-param-file="../Tools/autotest/default_params/plane-soaring.parm" --speedup %i', speedUp);
 %     cmd = '/home/samuel/ArdupilotDev/ardupilot/build/sitl/bin/arduplane -S -I0 --home -35.363261,149.165230,584,353 --model plane --speedup 20 --defaults /home/samuel/ArdupilotDev/ardupilot/Tools/autotest/default_params/plane.parm';
     
     runInTerminalWindow=true;
