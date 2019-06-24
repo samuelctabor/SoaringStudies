@@ -14,6 +14,11 @@ function logs = NormaliseTimes(logs)
                 logs(i).(field).TimeUS = double(logs(i).(field).TimeUS - startTime);
                 logs(i).(field).Time = logs(i).(field).TimeUS/1e6;
             end
+            
+            if isfield(logs(i).(field),'TimeS')
+                logs(i).(field).TimeS = double(logs(i).(field).TimeS - startTime/1e6);
+                logs(i).(field).Time = logs(i).(field).TimeS;
+            end
         end
     end 
 end

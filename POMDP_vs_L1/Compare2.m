@@ -30,8 +30,8 @@ end
       
 rerun=true;
 % rerun=false;
-runMask = [0,1,0,0,0];
-% runMask = ones(1,5);
+% runMask = [0,1,0,0,0];
+runMask = ones(1,5);
 
 for iL=1:length(names)
     if rerun && runMask(iL)
