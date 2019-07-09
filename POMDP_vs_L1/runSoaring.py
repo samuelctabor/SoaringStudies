@@ -75,7 +75,10 @@ for param in sys.argv:
         vehicle.parameters[strings[0]] = float(strings[1])
 
 print("Uploading mission ...")
-upload_mission('/home/samuel/ArdupilotDev/ardupilot/Tools/autotest/ArduPlane-Missions/CMAC-soar.txt');
+
+print("In %s" % os.getcwd())
+#upload_mission('/home/samuel/ArdupilotDev/ardupilot/Tools/autotest/ArduPlane-Missions/CMAC-soar.txt');
+upload_mission('/home/samuel/Personal/ardupilot/Tools/autotest/ArduPlane-Missions/CMAC-soar.txt');
 
 print("\nSet Vehicle.armed=True (currently: %s)" % vehicle.armed)
 vehicle.armed = True

@@ -28,8 +28,8 @@ end
 % params = {struct('SOAR_POMD_ENABLE',0.0,'WP_LOITER_RAD',20.0),...
 %           struct('SOAR_POMD_ENABLE',0.0,'WP_LOITER_RAD',30.0)};
       
-rerun=true;
-% rerun=false;
+% rerun=true;
+rerun=false;
 % runMask = [0,1,0,0,0];
 runMask = ones(1,5);
 
