@@ -12,7 +12,7 @@ function h = PlotLogs(logs, category, fields, lineTypes, names, ylabels, functio
         functions = {functions};
     end
     
-%     figure;
+    figure;
     colors = get(gca,'ColorOrder');
     
     if nargin<4 || isempty(lineTypes)
@@ -38,21 +38,20 @@ function h = PlotLogs(logs, category, fields, lineTypes, names, ylabels, functio
             mult=1;
             field=fields{iF};
             
-%             if field(1)=='@'
-%                 field=field(2:end);
-%                 if field(1)=='-'
-%                     mult=-1;
-%                     field=field(2:end);
-%                 end
-%             end     
-            data = logs(iL).(category{iF}).(field);
+            if field(1)=='@'
+                field=field(2:end);
+                if field(1)=='-'
+                    mult=-1;
+                    field=field(2:end);
+                end
+            end
+            data = mult*logs(iL).(category{iF}).(field);
             
-            if ~isempty(functions{iF})
+            if length(functions)>1 && ~isempty(functions{iF})
                 data = functions{iF}(data);
             end
             
             iC=mod(iL-1,length(colors))+1;
-%             h(end+1)=plot(logs(iL).(category{iF}).Time,mult*logs(iL).(category{iF}).(field),'Color',colors(iC,:),'LineStyle',lineTypes{iF});
             h(end+1)=plot(logs(iL).(category{iF}).Time,data,'Color',colors(iC,:),'LineStyle',lineTypes{iF});
         end
     end
