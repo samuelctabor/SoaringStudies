@@ -6,7 +6,7 @@ close all
 % solved with direct multiple-shooting.
 %
 % For more information see: http://labs.casadi.org/OCP
-addpath('~/MATLAB/CasADi/casadi-linux-matlabR2014b-v3.4.4/');
+addpath('~/Documents/MATLAB/CasADi/casadi-linux-matlabR2014b-v3.4.5/');
 N = 100; % number of control intervals
 
 opti = casadi.Opti(); % Optimization problem
@@ -15,12 +15,27 @@ opti = casadi.Opti(); % Optimization problem
 X = opti.variable(4,N+1); % state trajectory
 
 U = opti.variable(1,N+1);   % control trajectory (roll rate)
-T = 30.0;
+T = 20.0;
 V = 10.0;
 W = 5.0;
 R = 30.0;
 xth = [50;50];
+x_init = [0;0];
 g = 9.81;
+init_phi = pi/4;
+
+% Best thermalling radius.
+r   = 0.3:0.1:2.0 * R;
+roll = atan(V^2./(g*r));
+
+j = 2*roll.^2 - W*exp(-r.^2/R^2);
+[~, idx] = min(j);
+r_opt = 20;%r(idx);
+
+% Initial solution based on L1 control.
+Sol = compute_initial_solution(x_init, init_phi, xth, V, r_opt, N, T);
+
+
 
 maxU = deg2rad(10); % rad/s
 maxRoll = deg2rad(45); % rad
@@ -58,15 +73,16 @@ opti.subject_to(-maxU<=U<=maxU);           % control is limited
 opti.subject_to(-maxRoll<=X(4,:)<=maxRoll);           % roll is limited
 
 % ---- boundary conditions --------
-init_phi = pi/4;
-opti.subject_to(X(1,1)==0);   % start at position 0 ...
-opti.subject_to(X(2,1)==0);   % start at position 0 ...
+opti.subject_to(X(1,1)==x_init(1));   % start at position 0 ...
+opti.subject_to(X(2,1)==x_init(2));   % start at position 0 ...
 opti.subject_to(X(3,1)==init_phi);   % start at position 0 ...
 opti.subject_to(X(4,1)==0);   % start at position 0 ...
 
 endRelPos = [X(1,end)-xth(1), X(2,end)-xth(2)];
 endVector = [sin(X(3,end)), cos(X(3,end))];
 opti.subject_to(dot(endRelPos, endVector)/sqrt(sum(endRelPos.^2))==0); % final heading is aligned
+
+% opti.subject_to(sum(endRelPos.^2) == r_opt^2); % final radius
 
 reqROT  = V/sqrt(sum(endRelPos.^2));
 reqRoll = asin(V*reqROT/g);
@@ -80,12 +96,19 @@ reqRoll = asin(V*reqROT/g);
 
 % ---- solve NLP              ------
 opti.solver('ipopt'); % set numerical backend
+tic
 sol = opti.solve();   % actual solve
+toc
 
 % ---- post-processing        ------
 
-figure
-hold on
+figure,plot(Sol(:,2), Sol(:,1),'b--');
+
+th=0:0.1:2*pi;
+hold on;
+plot(xth(1)+r_opt*sin(th), xth(2)+r_opt*cos(th),'r--');
+
+
 j = sol.value(j_func(X,U));
 
 plot(sol.value(X(1,:)),sol.value(X(2,:)),'Color',[0.8,0.8,0.8]);
@@ -103,7 +126,7 @@ colorbar;
 figure
 hold on
 
-% Extract solution state trajectory.
+/% Extract solution state trajectory.
 Xv = sol.value(X);
 
 % Wrap psi (heading) to -pi->pi
