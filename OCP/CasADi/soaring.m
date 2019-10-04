@@ -33,8 +33,10 @@ j = 2*roll.^2 - W*exp(-r.^2/R^2);
 r_opt = 20;%r(idx);
 
 % Initial solution based on L1 control.
-Sol = compute_initial_solution(x_init, init_phi, xth, V, r_opt, N, T);
+init_sol = compute_initial_solution(x_init, init_phi, xth, V, r_opt, N+1, T);
 
+opti.set_initial(X, init_sol.X');
+opti.set_initial(U, init_sol.U');
 
 
 maxU = deg2rad(10); % rad/s
@@ -88,12 +90,6 @@ reqROT  = V/sqrt(sum(endRelPos.^2));
 reqRoll = asin(V*reqROT/g);
 % opti.subject_to(-X(4,end)==reqRoll); % balanced turn
 
-%----- initial guess ==========
-
-% opti.set_initial(X(1,:), [linspace(0,sin(init_phi)*V*T, N+1)]);
-% opti.set_initial(X(2,:), [linspace(0,cos(init_phi)*V*T, N+1)]);
-% opti.set_initial(X(3,:), repmat(init_phi, N+1, 1));
-
 % ---- solve NLP              ------
 opti.solver('ipopt'); % set numerical backend
 tic
@@ -102,7 +98,7 @@ toc
 
 % ---- post-processing        ------
 
-figure,plot(Sol(:,2), Sol(:,1),'b--');
+figure,plot(init_sol.X(:,2), init_sol.X(:,1),'b--');
 
 th=0:0.1:2*pi;
 hold on;
@@ -126,7 +122,7 @@ colorbar;
 figure
 hold on
 
-/% Extract solution state trajectory.
+% Extract solution state trajectory.
 Xv = sol.value(X);
 
 % Wrap psi (heading) to -pi->pi
@@ -150,3 +146,11 @@ stairs(1:(N+1),rad2deg(sol.value(U)),'k');
 plot(1:(N+1),rad2deg(maxRoll *repmat([1;-1],1,N+1)),'r--');
 plot(1:(N+1),rad2deg(maxU    *repmat([1;-1],1,N+1)),'b--');
 legend([state_vector;{'U'}])
+
+% Plot initial vs final
+figure,plot(1:N+1,init_sol.X)
+set(gca,'ColorOrderIndex',1)
+hold on
+plot(1:N+1, sol.value(X),'--')
+grid on; grid minor
+legend('X','Y','Hdg','Roll');
