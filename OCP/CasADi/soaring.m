@@ -81,19 +81,27 @@ opti.subject_to(X(3,1)==init_phi);   % start at position 0 ...
 opti.subject_to(X(4,1)==0);   % start at position 0 ...
 
 endRelPos = [X(1,end)-xth(1), X(2,end)-xth(2)];
+endRadius = sqrt(sum(endRelPos.^2));
 endVector = [sin(X(3,end)), cos(X(3,end))];
-opti.subject_to(dot(endRelPos, endVector)/sqrt(sum(endRelPos.^2))==0); % final heading is aligned
 
-% opti.subject_to(sum(endRelPos.^2) == r_opt^2); % final radius
+opti.subject_to(dot(endRelPos, endVector)/sqrt(sum(endRelPos.^2))==0); % final heading is tangent
 
-reqROT  = V/sqrt(sum(endRelPos.^2));
-reqRoll = asin(V*reqROT/g);
-% opti.subject_to(-X(4,end)==reqRoll); % balanced turn
+reqRoll = sign(init_sol.X(end,4))*asin(V^2/(r_opt*g));
+opti.subject_to((X(4,end))==reqRoll); % balanced turn
+
+
 
 % ---- solve NLP              ------
 opti.solver('ipopt'); % set numerical backend
 tic
 sol = opti.solve();   % actual solve
+
+
+% Add additional constraints/
+opti.subject_to((endRelPos(1)*endVector(2) - endRelPos(2)*endVector(1)) == -sign(init_sol.X(end,4))*endRadius);
+
+opti.subject_to(endRadius == r_opt); % final radius
+sol = opti.solve();
 toc
 
 % ---- post-processing        ------
