@@ -71,7 +71,7 @@ function [thrustPower, CL, CD, CT, x, y, z, vx, vy, vz, psi, roll, vectorData] =
 
     % Now we can determine roll angle.
     local_horiz=cross(repmat([0;0;1],1,length(V_rel_norm)),V_rel_norm,1);
-    lat_lift = -dot(liftFvec, local_horiz./norm2(local_horiz));
+    lat_lift = dot(liftFvec, local_horiz./norm2(local_horiz));
     roll = asin(lat_lift./liftFmag);
 %     roll = atan2(norm2(liftFvec(1:2,:)),liftFvec(3,:));
    
