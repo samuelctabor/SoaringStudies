@@ -24,7 +24,7 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
     
     V = norm(vel);
     
-    roll_tau = 0.5;
+    roll_tau = 0.2;
     
     t = linspace(0,6,1000);
     t  =t(1:end-1);
@@ -73,14 +73,13 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
     req_lift = target_accel - DCM'*[0;0;-g];
     
     % Angle error
-%     roll_err = acos(dot([0;0;1], req_lift)/norm(req_lift));
     roll_err = asin(-req_lift(2)/norm(req_lift));
     
     roll_rate = roll_err/roll_tau;
     
     % Now pitch rate
-    pitch_rate = cos(roll_err)*acc/V;
-%     pitch_rate = acc/V;
+    relative_roll = asin(-target_accel(2)/norm(target_accel));
+    pitch_rate = cos(relative_roll)*acc/V;
 
     [roll,pitch,heading] = DCMToEuler_ENU(DCM);
 

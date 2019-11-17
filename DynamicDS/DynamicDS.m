@@ -28,7 +28,7 @@ dGdAlpha = g/deg2rad(3);
 
 % Initial conditions
 % 20 deg inclination, small error
-if (0)
+if (1)
     trajSpec.inclination = 20;
     trajSpec.R = 30;
     pos = [0;30;30];
@@ -36,8 +36,10 @@ if (0)
     roll    = 90;
     pitch   = 0;
     heading = 0;
-    alpha   = 3;
+    accelreq = sqrt((V^2/trajSpec.R)^2 + 9.81^2);
+    alpha_trim   = accelreq/dGdAlpha;
 else
+    % Flat turn.
     trajSpec.inclination = 0;
     trajSpec.R = 30;
     pos = [0; trajSpec.R; 1.5];
@@ -46,17 +48,22 @@ else
     pitch   = 0;
     heading = 0;
     accelreq = sqrt((V^2/trajSpec.R)^2 + 9.81^2);
-    alpha   = accelreq/dGdAlpha;
+    alpha_trim   = accelreq/dGdAlpha;
+    
+    % Component about y axis.
+    expected_pitch_rate = sind(roll)*V/trajSpec.R;
 end
 
 DCM = EulerToDCM_ENU(deg2rad(roll),deg2rad(pitch),deg2rad(heading));
 
-% Rotate about y by initial angle of attack.
- T2 = [cos(alpha), 0, -sin(alpha);
-                0, 1,           0;
-       sin(alpha), 0,  cos(alpha)];
+if (0)
+     % Rotate about y by initial angle of attack.
+     T2 = [cos(alpha), 0, -sin(alpha);
+                    0, 1,           0;
+           sin(alpha), 0,  cos(alpha)];
 
- DCM = DCM*T2;
+     DCM = DCM*T2;
+end
 
 [roll,pitch,heading] = DCMToEuler_ENU(DCM);
 
@@ -109,7 +116,7 @@ for iT=1:N
     lift_vec = cross(vel, DCM(:,2));
     lift_vec = lift_vec/norm(lift_vec);
     
-    accel = lift_vec*dGdAlpha*alpha + [0;0;-g];
+    accel = lift_vec*dGdAlpha*(alpha + alpha_trim) + [0;0;-g];
     accel = accel - vel/norm(vel) * (norm(vel) - V);
     
     q = q + q_rates*dt;
