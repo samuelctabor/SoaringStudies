@@ -1,4 +1,4 @@
-function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag)
+function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,10 +11,9 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
     traj.clz0 = 1.5;
     traj.th = 0;
 
-    traj.ax = 30;
-    inc = 20; %deg
-    traj.ay = cosd(inc)*30;
-    traj.az = sind(inc)*30;
+    traj.ax = trajSpec.R;
+    traj.ay = cosd(trajSpec.inclination)*trajSpec.R;
+    traj.az = sind(trajSpec.inclination)*trajSpec.R;
     traj.bx = 0;
     traj.by = pi/2;
     traj.bz = pi/2;

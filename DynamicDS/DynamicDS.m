@@ -21,28 +21,52 @@ addpath('../DS');
 clear;
 
 V   = 20; %m/s
+g   = 0;
 
-DCM = EulerToDCM_ENU(deg2rad(90),0,deg2rad(0));
+% Initial conditions
+% 20 deg inclination, small error
+if (1)
+    trajSpec.inclination = 20;
+    trajSpec.R = 30;
+    pos = [0;30;30];
+    vel = [V;0;0];
+    roll    = 90;
+    pitch   = 0;
+    heading = 0;
+else
+    trajSpec.inclination = 0;
+    trajSpec.R = 30;
+    pos = [0; trajSpec.R; 1.5];
+    vel = [V;0;0];
+    roll    = atand(V^2/(trajSpec.R*g));
+    pitch   = 0;
+    heading = 0;
+end
+
+DCM = EulerToDCM_ENU(deg2rad(roll),deg2rad(pitch),deg2rad(heading));
 
 [roll,pitch,heading] = DCMToEuler_ENU(DCM);
 
 q   = DCMToQuaternion(DCM');
-% pos = [0;20;20];
-% pos = [0;29;17];
-% pos = [0;30;1.5+3];
-pos = [0;30;30];
-vel = [V;0;0];
+
 dt = 0.01;
-g = 0;%9.81;
 
 plotFlag = true;
 
-for iT=1:2000
+N = 2000;
+Pos       = zeros(N,3);
+Target    = zeros(N,3);
+Accel     = zeros(N,3);
+ZDir      = zeros(N,3);
+Rates     = zeros(N,3);
+AlphaBeta = zeros(N,2);
+
+for iT=1:N
     
     DCM = QuaternionToDCM(q)';
     
-    plotFlag = mod(iT,100)==0;
-    [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag);
+    plotFlag = 0;%mod(iT,100)==0;
+    [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec);
     
 %     pitch_rate = 2/3;
 %     roll_rate = 0;
