@@ -49,6 +49,18 @@ for iT=1:2000
 
     body_rates = [roll_rate; -pitch_rate; 0];
 
+    % Apparent velocity.
+    wind = [0;0;0];
+    vel_air = wind - vel;
+    v_rel = DCM'*vel_air;
+    
+    % Calculate angle of attack.
+    
+    alpha = atan2(v_rel(3),-v_rel(1));
+    
+    % Calculate sideslip angle and apply yaw rate.
+    beta = atan2(v_rel(2), sqrt(v_rel(1)^2 + v_rel(3)^2));
+    
     q_rates = BodyRatesToQuaternionRates(body_rates, q);
     
     accel = DCM(:,3)*pitch_rate*V + [0;0;-g];
@@ -63,6 +75,7 @@ for iT=1:2000
     Accel(iT,:) = accel';
     ZDir(iT,:) = DCM(:,3)';
     Rates(iT,:) = body_rates';
+    AlphaBeta(iT,:) = [alpha, beta];
 end
 
 figure,plot3(Pos(:,1),Pos(:,2),Pos(:,3));
