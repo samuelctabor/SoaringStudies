@@ -21,11 +21,14 @@ addpath('../DS');
 clear;
 
 V   = 20; %m/s
-g   = 0;
+g   = 9.81;
+
+% Assume 3 degrees alpha for level 1G flight at V.
+dGdAlpha = g/deg2rad(3);
 
 % Initial conditions
 % 20 deg inclination, small error
-if (1)
+if (0)
     trajSpec.inclination = 20;
     trajSpec.R = 30;
     pos = [0;30;30];
@@ -33,6 +36,7 @@ if (1)
     roll    = 90;
     pitch   = 0;
     heading = 0;
+    alpha   = 3;
 else
     trajSpec.inclination = 0;
     trajSpec.R = 30;
@@ -41,9 +45,18 @@ else
     roll    = atand(V^2/(trajSpec.R*g));
     pitch   = 0;
     heading = 0;
+    accelreq = sqrt((V^2/trajSpec.R)^2 + 9.81^2);
+    alpha   = accelreq/dGdAlpha;
 end
 
 DCM = EulerToDCM_ENU(deg2rad(roll),deg2rad(pitch),deg2rad(heading));
+
+% Rotate about y by initial angle of attack.
+ T2 = [cos(alpha), 0, -sin(alpha);
+                0, 1,           0;
+       sin(alpha), 0,  cos(alpha)];
+
+ DCM = DCM*T2;
 
 [roll,pitch,heading] = DCMToEuler_ENU(DCM);
 
@@ -67,9 +80,6 @@ for iT=1:N
     
     plotFlag = 0;%mod(iT,100)==0;
     [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec);
-    
-%     pitch_rate = 2/3;
-%     roll_rate = 0;
 
     body_rates = [roll_rate; -pitch_rate; 0];
 
@@ -85,9 +95,17 @@ for iT=1:N
     % Calculate sideslip angle and apply yaw rate.
     beta = atan2(v_rel(2), sqrt(v_rel(1)^2 + v_rel(3)^2));
     
+    body_rates(3) = -3*beta;
+
     q_rates = BodyRatesToQuaternionRates(body_rates, q);
+   
+   
+    % Determine lift force direction.
+    % Perpendicular to velocity and to aircraft y axis.
+    lift_vec = cross(vel, DCM(:,2));
+    lift_vec = lift_vec/norm(lift_vec);
     
-    accel = DCM(:,3)*pitch_rate*V + [0;0;-g];
+    accel = lift_vec*dGdAlpha*alpha + [0;0;-g];
     
     q = q + q_rates*dt;
     
