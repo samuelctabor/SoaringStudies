@@ -22,6 +22,7 @@ clear;
 
 V   = 20; %m/s
 g   = 9.81;
+Vw  = 0; %m/s at 10m
 
 % Assume 3 degrees alpha for level 1G flight at V.
 dGdAlpha = g/deg2rad(3);
@@ -76,6 +77,7 @@ plotFlag = true;
 N = 2000;
 Pos       = zeros(N,3);
 Vel       = zeros(N,3);
+V_rel     = zeros(N,3);
 Target    = zeros(N,3);
 Accel     = zeros(N,3);
 ZDir      = zeros(N,3);
@@ -94,7 +96,7 @@ for iT=1:N
     body_rates = [roll_rate; -pitch_rate; 0];
 
     % Apparent velocity.
-    wind = [0;0;0];
+    wind = [0;-Vw*pos(3)/10;0];
     vel_air = wind - vel;
     v_rel = DCM'*vel_air;
     
@@ -117,7 +119,7 @@ for iT=1:N
     lift_vec = lift_vec/norm(lift_vec);
     
     accel = lift_vec*dGdAlpha*(alpha + alpha_trim) + [0;0;-g];
-    accel = accel - vel/norm(vel) * (norm(vel) - V);
+    accel = accel + vel_air/norm(vel_air) * (norm(vel_air) - V);
     
     q = q + q_rates*dt;
     
@@ -125,6 +127,7 @@ for iT=1:N
     vel = vel+accel*dt;
     
     Vel(iT,:) = vel;
+    V_rel(iT,:) = v_rel;
     Pos(iT,:) = pos';
     Target(iT,:) = target_pos';
     Accel(iT,:) = accel';
@@ -137,7 +140,7 @@ Time = (1:N)*dt;
 
 figure,plot3(Pos(:,1),Pos(:,2),Pos(:,3));
 hold on;
-
+xlabel('x [m]'); ylabel('y [m]'); zlabel('z [m]');
 plot3(Target(:,1), Target(:,2), Target(:,3),'r');
 axis equal;
 
