@@ -68,6 +68,7 @@ plotFlag = true;
 
 N = 2000;
 Pos       = zeros(N,3);
+Vel       = zeros(N,3);
 Target    = zeros(N,3);
 Accel     = zeros(N,3);
 ZDir      = zeros(N,3);
@@ -109,12 +110,14 @@ for iT=1:N
     lift_vec = lift_vec/norm(lift_vec);
     
     accel = lift_vec*dGdAlpha*alpha + [0;0;-g];
+    accel = accel - vel/norm(vel) * (norm(vel) - V);
     
     q = q + q_rates*dt;
     
     pos = pos+vel*dt;
     vel = vel+accel*dt;
     
+    Vel(iT,:) = vel;
     Pos(iT,:) = pos';
     Target(iT,:) = target_pos';
     Accel(iT,:) = accel';
