@@ -115,6 +115,8 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
         view(3);
         axis tight;
         
+        legend('Target traj','Target point','Vec to target','Target acc','Target lift');
+        
         % Plot in ac frame of reference.
         figure; hold on;
         
@@ -146,6 +148,7 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
         
         axis tight;
         
+        legend('Target traj','Target point','Vec to target','Target acc','Target lift');
          %End    
     end
     
