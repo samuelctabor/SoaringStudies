@@ -133,8 +133,25 @@ for iT=1:N
     AlphaBeta(iT,:) = [alpha, beta];
 end
 
+Time = (1:N)*dt;
+
 figure,plot3(Pos(:,1),Pos(:,2),Pos(:,3));
 hold on;
 
 plot3(Target(:,1), Target(:,2), Target(:,3),'r');
 axis equal;
+
+figure;
+
+subplot(3,1,1); plot(Time, sqrt(sum(Vel.^2,2)));
+xlabel('Time [s]'); ylabel('Velocity [m/s]');
+grid on; grid minor;
+
+subplot(3,1,2); plot(Time, sqrt(sum(Pos.^2,2)));
+xlabel('Time [s]'); ylabel('Position [m/s]');
+grid on; grid minor;
+
+subplot(3,1,3); plot(Time, rad2deg(AlphaBeta));
+xlabel('Time [s]'); ylabel('Angle [deg]');
+grid on; grid minor;
+legend('Alpha','Beta');
