@@ -74,6 +74,8 @@ ZDir      = zeros(N,3);
 Rates     = zeros(N,3);
 AlphaBeta = zeros(N,2);
 
+iBeta = 0.8;
+
 for iT=1:N
     
     DCM = QuaternionToDCM(q)';
@@ -95,7 +97,8 @@ for iT=1:N
     % Calculate sideslip angle and apply yaw rate.
     beta = atan2(v_rel(2), sqrt(v_rel(1)^2 + v_rel(3)^2));
     
-    body_rates(3) = -3*beta;
+    iBeta = iBeta + beta;
+    body_rates(3) = -3*beta - 0.5*iBeta;
 
     q_rates = BodyRatesToQuaternionRates(body_rates, q);
    
