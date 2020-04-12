@@ -86,6 +86,9 @@ t1 =linspace(0,t(end),1000);
 
 trajectoryPlot(x1,y1,z1,vx1,vy1,vz1,psi, roll, windFunc, vectorData);
 
+figure,plot(t, validation.phi,t1,roll);
+ylabel('Roll');
+
 figure,plot3(x,y,z,'b');
 hold on
 plot3(x1-x1(1),y1-y1(1),z1,'r');

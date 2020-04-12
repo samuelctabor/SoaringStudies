@@ -11,19 +11,6 @@ function h = plotSmallAeroplanes(ax, x, y, z, heading, roll, pitch, idx)
     
     
     % Plot a series of patches.
-%     wing = [[0.5, 0.5, 0.2, -0.2, -0.5, -0.5]*0.2;
-%             [0.0, 1.0, 3.0,  3.0,  1.0,  0.0]/3;
-%             [0.0, 0.0, 0.1,  0.1,  0.0,  0.0]];
-%         
-
-%     wing = [[0.5, 0.5, -0.5, -0.5]*0.2;
-%             [0.0, 1.0,  1.0,  0.0]/3;
-%             [0.0, 0.0,  0.0,  0.0]];
-%         
-%         
-%     wing_tip = [[0.5, 0.2, -0.2, -0.5]*0.2;
-%                 [1.0, 3.0,  3.0,  1.0]/3;
-%                 [0.0, 0.1,  0.1,  0.0]];
 
     wing = [[0.5, 0.5, 0.35, -0.35, -0.5, -0.5]*0.2;
             [0.0, 1.0, 2.0, 2.0,  1.0,  0.0]/3;
@@ -50,8 +37,8 @@ function h = plotSmallAeroplanes(ax, x, y, z, heading, roll, pitch, idx)
         
         % Rotate about x by roll.
         T1 = [1,         0 ,         0;
-              0,  cos(roll(i)), sin(roll(i));
-              0, -sin(roll(i)), cos(roll(i))];
+              0,  cos(roll(i)),-sin(roll(i));
+              0,  sin(roll(i)), cos(roll(i))];
 
         % Rotate about y by pitch.
         T2 = [cos(pitch(i)), 0, -sin(pitch(i));
@@ -63,24 +50,26 @@ function h = plotSmallAeroplanes(ax, x, y, z, heading, roll, pitch, idx)
              -sin(heading(i)), cos(heading(i)), 0;
                             0,               0, 1];
 
+        T = T3*T2*T1;
+        
         RY = [1, 0, 0;
               0,-1, 0;
               0, 0, 1];
 
         sc= 3;
-      
-        wing1_t = P + sc*T3*T2*T1*wing;
-        wing2_t = P + sc*T3*T2*T1*RY*wing;
-
-        wing1tip_t = P + sc*T3*T2*T1*wing_tip;
-        wing2tip_t = P + sc*T3*T2*T1*RY*wing_tip;
         
-        tail1_t = P + sc*T3*T2*T1*   (tail*0.3 + [-0.8;0;0]);
-        tail2_t = P + sc*T3*T2*T1*RY*(tail*0.3 + [-0.8;0;0]);
+        wing1_t = P + sc*T*wing;
+        wing2_t = P + sc*T*RY*wing;
 
-        vtail_t = P + sc*T3*T2*T1*   ([1,0,0;0,0,-1;0,1,0]*tail*0.3 + [-0.8;0;0]);
+        wing1tip_t = P + sc*T*wing_tip;
+        wing2tip_t = P + sc*T*RY*wing_tip;
         
-        fuse_t = P + sc*T3*T2*T1*fuse;
+        tail1_t = P + sc*T*   (tail*0.3 + [-0.8;0;0]);
+        tail2_t = P + sc*T*RY*(tail*0.3 + [-0.8;0;0]);
+
+        vtail_t = P + sc*T*   ([1,0,0;0,0,-1;0,1,0]*tail*0.3 + [-0.8;0;0]);
+        
+        fuse_t = P + sc*T*fuse;
 
         patch(ax, wing1_t(1,:), wing1_t(2,:), wing1_t(3,:), zeros(1,nv),'FaceColor','w');
         patch(ax, wing2_t(1,:), wing2_t(2,:), wing2_t(3,:), zeros(1,nv),'FaceColor','w');
