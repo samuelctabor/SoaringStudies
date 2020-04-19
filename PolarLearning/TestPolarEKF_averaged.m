@@ -14,12 +14,12 @@ function TestPolarEKF_averaged(iSeed)
 
     Sim.EndTime=2000;
     
-    Filter.Type = '4 State';
+    Filter.Type = '2 State';
     
-    Aircraft.Cd0 = 0.028;
-    Aircraft.B   = 0.04;
-    Aircraft.m = 0.56;
-    Aircraft.S = 0.35;
+    Aircraft.Cd0 = 0.05;
+    Aircraft.B   = 0.045;
+    Aircraft.m = 2.0;
+    Aircraft.S = 0.45;
 %     Aircraft.m = 13/2.205;
 %     Aircraft.S = 10.57*0.3048^2;
     Aircraft.k   = 2*Aircraft.m*9.81/(1.225*Aircraft.S); % 2*W/rho*S
@@ -32,7 +32,7 @@ function TestPolarEKF_averaged(iSeed)
     Sim.Vz_std = 0.3;
     
     
-    if (1)
+    if (0)
         Sim.VTarget = SetupScenario(Sim.Time);
         if (0)
             % Second oder filter representation.
@@ -62,11 +62,12 @@ function TestPolarEKF_averaged(iSeed)
         Sim.States.h = 100 - Sim.dT*cumtrapz(Sim.States.Vz);
     
         % Work out what the measurements and inputs were.
-        Measurement.V_std = 0.2;
-        Measurement.h_std = 0.5;
+        Measurement.V_std = 0.1;
+        Measurement.h_std = 0.1;
 
         Filter.Measurement.h = Sim.States.h + Measurement.h_std*randn(Sim.nT,1);
         Filter.Measurement.V = Sim.States.V + Measurement.V_std*randn(Sim.nT,1);
+        Filter.Measurement.VSpeed = Sim.States.Vz;
         
         Filter.Measurement.Throttle = zeros(Sim.nT,1);
         
@@ -82,9 +83,12 @@ function TestPolarEKF_averaged(iSeed)
 
     else
         % Load log file
-        LogData=ReadMAVLog('../log14.log',{'TECS','CTUN','IMU'});
-        
-        %getField=@(f,x) LogData.(f)(:,strcmpi(strtrim(LogData.([f,'_label'])),x));
+        % Typical airspeed variation, from log.
+        addpath('~/ardupilog');
+            
+%         LogData = Ardupilog('00000003.BIN');
+        LogData = Ardupilog('Ex2.BIN');
+            
         getField=@(f,x) LogData.(f).(x);
         
         Sim.Time = getField('CTUN','TimeUS')/1e6;
@@ -104,12 +108,14 @@ function TestPolarEKF_averaged(iSeed)
         Sim.AccX     = interpField('IMU', 'AccX');
         Sim.AccY     = interpField('IMU', 'AccY');
         Sim.AccZ     = interpField('IMU', 'AccZ');
+        Sim.VSpeed   = interpField('TECS', 'dh');
 
         
         Filter.Measurement.Time = Sim.Time;
         Filter.Measurement.h = Sim.States.h;
         Filter.Measurement.V = Sim.States.V;
         Filter.Measurement.Throttle = Sim.Throttle;
+        Filter.Measurement.VSpeed = Sim.VSpeed;
         Filter.Inputs.Roll = Sim.Roll;
     end
 
@@ -119,20 +125,21 @@ function TestPolarEKF_averaged(iSeed)
     Filter.dT = Sim.dT*Filter.Rate;
     Filter.h_std = 1/sqrt(Filter.Rate);
     Filter.V_std = 0.2/sqrt(Filter.Rate);
+    Filter.Vz_std = 0.5/sqrt(Filter.Rate);
     Filter.MinV = 5;
     
-    %Filter.Pinit = [5,   0.05, 0.005, 0.02];
-    Filter.Pinit = [5,   0.05, 0.01, 0.05];
-    %Filter.Q     = [0.5, 0.2,    0,    0]; 
-    Filter.Q     = [0.1, 0.05,    0,    0]; 
+    %Filter.Pinit = [0.005, 0.005, 5,   0.05];
+    Filter.Pinit = [0.005, 0.005, 5,   0.5];
+    %Filter.Q     = [  0,    0, 0.5, 0.2];
+    Filter.Q     = [  0,    0, 0.1, 0.05];
     Filter.R     = [Filter.h_std, Filter.V_std];
 
-    Filter.xinit = [Sim.States.h(1) + 5    * randn;...
-                    Sim.States.V(1) + 0.2  * randn;
-                    0.02;...
-                    0.04];
+    Filter.xinit = [0.020;...
+                    0.030;...
+                    Sim.States.h(1) + 5    * randn;...
+                    Sim.States.V(1) + 0.2  * randn];
                 
-    Filter.StateLabels = {'Height','Velocity','Cd0','B'};    
+    Filter.StateLabels = {'Cd0','B','Height','Velocity'};
     Filter.InputLabels = {'Height','Velocity'};
 
     Filter.AircraftK = Aircraft.k;
@@ -150,6 +157,13 @@ function TestPolarEKF_averaged(iSeed)
         Filter.xinit = [Filter.xinit; Aircraft.k+1*randn];
         
         Filter.StateLabels = [Filter.StateLabels, 'K'];
+    case '2 State'
+        % Doesn't estimate V and h, just uses them directly.
+        Filter.Pinit = Filter.Pinit(1:2);
+        Filter.Q = Filter.Q(1:2);
+        Filter.R     = Filter.Vz_std;
+        Filter.xinit = Filter.xinit(1:2);
+        Filter.StateLabels = Filter.StateLabels(1:2);
     end
 
 
@@ -182,11 +196,18 @@ function TestPolarEKF_averaged(iSeed)
     
     subplot(2,2,2);
     plot(Sim.Time,Filter.Measurement.h,...
-         Sim.Time,Filter.States(:,1),...
          Sim.Time,Sim.States.h);
     title('Height');
+    leg = {'Measured','Actual'};
+    
+    switch Filter.Type
+        case {'4 State','5 State'}
+            hold on;
+            plot(Sim.Time,Filter.States(:,3));
+            leg = [leg,'Estimate'];
+    end
     xlabel('Time [s]'); ylabel('Height [m]');
-    legend('Measured','Estimate','Actual');
+    legend(leg);
     grid on; grid minor;
     
 
@@ -257,9 +278,12 @@ function TestPolarEKF_averaged(iSeed)
     
     subplot(2,2,2); hold on;
     title('State convergence');
-    plot(Sim.Time,Filter.States(:,3:4),'-');
-    plot(Sim.Time,[Aircraft.Cd0*ones(Sim.nT,1),Aircraft.B*ones(Sim.nT,1)],'r--');
-    legend(Filter.StateLabels(3:4));
+
+    plot(Sim.Time,Filter.States(:,1:2),'-');
+    
+    set(gca,'ColorOrderIndex',1);
+    plot(Sim.Time,[Aircraft.Cd0*ones(Sim.nT,1),Aircraft.B*ones(Sim.nT,1)],'--');
+    legend(Filter.StateLabels(1:2));
     
     if strcmp(Filter.Type,'5 State')
         figure,hold on;
@@ -271,8 +295,10 @@ function TestPolarEKF_averaged(iSeed)
     grid on; grid minor;
     
     subplot(2,2,3);hold on;
-    ParameterP = Filter.P(:,3:end,3:end);
-    ParameterL = Filter.StateLabels(3:end);
+    
+    ParameterP = Filter.P(:,1:2,1:2);
+    ParameterL = Filter.StateLabels(1:2);
+    
     plot(Sim.Time,reshape(ParameterP,Sim.nT,[]));
     for i=1:length(ParameterL)
         for j=1:length(ParameterL)
@@ -351,7 +377,8 @@ function Filter = RunPolarFilter(Filter)
                               Filter.Measurement.h(i),...
                               Filter.Measurement.Throttle(i),...
                               Filter.Inputs.V(i),...
-                              Filter.Inputs.Roll(i));
+                              Filter.Inputs.Roll(i),...
+                              Filter.Measurement.VSpeed(i));
                           
         % State logging
         Filter.States(i,:) = polarEstimator.ekf.x;
@@ -359,21 +386,20 @@ function Filter = RunPolarFilter(Filter)
         Filter.P(i,:,:)    = polarEstimator.ekf.P;
         Filter.Active(i)   = polarEstimator.Active;
     end
+
+    Filter.InitialEstimate.Cd0 = Filter.xinit(1);
+    Filter.InitialEstimate.B   = Filter.xinit(2);
     
-    Filter.InitialEstimate.Cd0 = Filter.xinit(3);
-    Filter.InitialEstimate.B   = Filter.xinit(4);
+    Filter.FinalEstimate.Cd0 = Filter.States(end,1);
+    Filter.FinalEstimate.B   = Filter.States(end,2);
     
-    Filter.FinalEstimate.Cd0 = Filter.States(end,3);
-    Filter.FinalEstimate.B   = Filter.States(end,4);
-    
-    switch Filter.Type
-        case '4 State'
-            % K provided
-            Filter.InitialEstimate.k = Filter.AircraftK;
-            Filter.FinalEstimate.k   = Filter.AircraftK;
-        case '5 State';
-            % K estimated
-            Filter.InitialEstimate.k = Filter.xinit(5);
-            Filter.FinalEstimate.k   = Filter.States(end,5);
+    if strcmp(Filter.Type, '5 State')
+        % K estimated
+        Filter.InitialEstimate.k = Filter.xinit(5);
+        Filter.FinalEstimate.k   = Filter.States(end,5);
+    else
+        % K provided
+        Filter.InitialEstimate.k = Filter.AircraftK;
+        Filter.FinalEstimate.k   = Filter.AircraftK;
     end
 end

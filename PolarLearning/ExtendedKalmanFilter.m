@@ -21,7 +21,7 @@ classdef ExtendedKalmanFilter < handle
     end
     
     methods
-        function obj=ExtendedKalmanFilter(Pinit,xinit,Q,R,jacobian_f,jacobian_h)
+        function obj=ExtendedKalmanFilter(Pinit,xinit,Q,R,jacobian_f,jacobian_h, inputUpdate)
             obj.P=Pinit;
             obj.x=xinit;
 
@@ -30,11 +30,19 @@ classdef ExtendedKalmanFilter < handle
             
             obj.jacobian_f = jacobian_f;
             obj.jacobian_h = jacobian_h;
+            
+            if nargin>6
+                obj.inputUpdate = inputUpdate;
+            end
         end
         function update(ekf,z,u)
             %Estimate new state from old. Also obtain Jacobian matrix for
             %later.
-            [x2,A]=ekf.jacobian_f(ekf.x, u);
+            
+            x1 = ekf.x;
+            x1(1:2) = max(x1(1:2),[0.02;0.02]);
+            
+            [x2,A]=ekf.jacobian_f(x1, u);
             %Add inputs effects
             
             %What measurement do we expect to receive in the estimated
