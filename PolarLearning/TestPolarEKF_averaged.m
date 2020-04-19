@@ -157,13 +157,15 @@ function TestPolarEKF_averaged(iSeed)
         Filter.xinit = [Filter.xinit; Aircraft.k+1*randn];
         
         Filter.StateLabels = [Filter.StateLabels, 'K'];
-    case '2 State'
+    case {'2 State','2 State simple'}
         % Doesn't estimate V and h, just uses them directly.
         Filter.Pinit = Filter.Pinit(1:2);
         Filter.Q = Filter.Q(1:2);
         Filter.R     = Filter.Vz_std;
         Filter.xinit = Filter.xinit(1:2);
         Filter.StateLabels = Filter.StateLabels(1:2);
+    otherwise
+        error('Unrecognised filter type');
     end
 
 
@@ -393,13 +395,16 @@ function Filter = RunPolarFilter(Filter)
     Filter.FinalEstimate.Cd0 = Filter.States(end,1);
     Filter.FinalEstimate.B   = Filter.States(end,2);
     
-    if strcmp(Filter.Type, '5 State')
-        % K estimated
-        Filter.InitialEstimate.k = Filter.xinit(5);
-        Filter.FinalEstimate.k   = Filter.States(end,5);
-    else
-        % K provided
-        Filter.InitialEstimate.k = Filter.AircraftK;
-        Filter.FinalEstimate.k   = Filter.AircraftK;
+    switch Filter.Type
+        case '5 State'
+            % K estimated
+            Filter.InitialEstimate.k = Filter.xinit(5);
+            Filter.FinalEstimate.k   = Filter.States(end,5);
+        case {'2 State','2 State simple','4 State'}
+            % K provided
+            Filter.InitialEstimate.k = Filter.AircraftK;
+            Filter.FinalEstimate.k   = Filter.AircraftK;
+        otherwise
+            error('Unrecognised filter type');
     end
 end

@@ -65,7 +65,12 @@ classdef PolarEstimator < handle
                                             @obj.jacobian_f_2state,...
                                             @obj.jacobian_h_2state ,...
                                             @obj.inputUpdate);
-               
+                case '2 State simple'
+                    obj.ekf = ...
+                        ExtendedKalmanFilter_polar2state( diag(Pinit.^2),...
+                                            xinit,...
+                                            diag(Q.^2),...
+                                            diag(R.^2));
                 otherwise
                     error('Unrecognised type!');
             end
@@ -95,31 +100,37 @@ classdef PolarEstimator < handle
                 obj.Reset = false;
                 
                 switch obj.Type
-                    case '4 state'
+                    case '4 State'
                         obj.ekf.reset_state([obj.ekf.x(1);...
                                              obj.ekf.x(2);...
                                              Height;...
                                              Speed]);
-                    case '5 state'
+                    case '5 State'
                         obj.ekf.reset_state([obj.ekf.x(3);...
                                              obj.ekf.x(4);...
                                              Height;...
                                              Speed;...
                                              obj.ekf.x(5)]);
-                    case '2 state'
+                    case '2 State'
                         % No need to do anything
+                    case '2 State simple'
+                        % No need to do anything
+                    otherwise
+                        error('Unrecognised filter type');
                 end
             else
                 obj.Active = true;
                 % Conditions suitable and no reset required.
                 
                 switch obj.Type
-                    case '2 State'
+                    case {'2 State', '2 State simple'}
                         FilterMeasurement = -VSpeed;
-                        FiltInputs = [0;0];
-                    otherwise
+                        FiltInputs = [Speed;Roll;obj.k];
+                    case {'4 State', '5 State'}
                         FilterMeasurement = [Height;Speed];
                         FiltInputs = [0; VTarget - obj.PreviousVTarget; 0;0];
+                    otherwise
+                        error('Unrecognised filter type');
                 end
                 
                 obj.ekf.update(FilterMeasurement,FiltInputs);
@@ -138,13 +149,16 @@ classdef PolarEstimator < handle
             w = A*x;
         end
         
-        function [w,A]=jacobian_h_2state(obj,x,~)
+        function [w,A]=jacobian_h_2state(obj,x,u)
             % Pred measurement
+            V = u(1);
+            roll = u(2);
+            k = u(3);
             
             A=zeros(1,numel(x));
             
-            A(1) = cosd(obj.roll)*obj.V^3/obj.k;
-            A(2) = obj.k / (cosd(obj.roll)*obj.V);
+            A(1) = cosd(roll)*V^3/k;
+            A(2) = k / (cosd(roll)*V);
             w = A*x;
         end
         
