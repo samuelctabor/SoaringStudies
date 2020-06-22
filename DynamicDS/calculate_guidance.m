@@ -1,4 +1,4 @@
-function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec)
+function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -20,11 +20,11 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
     traj.w  = 2*pi*(1/6);
 
     % Find the point on trajectory the correct distance ahead.
-    L1 = 40;
+    L1 = 2*norm(vel);
     
     V = norm(vel);
     
-    roll_tau = 0.2;
+    roll_tau = 0.1;
     
     t = linspace(0,6,1000);
     t  =t(1:end-1);
@@ -62,15 +62,26 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
     % We need a target acceleration vector to pass through the target.
     % Angle between x axis and vector to target.
     dist = norm(target_pos_2);
-    nu = acos(dot([1;0;0], target_pos_2)/dist);
+%     nu = acos(dot([1;0;0], target_pos_2)/dist);
+%     r = dist/(2*sin(nu));
+%     acc = V^2/r;
+%     accel_dir = [0; target_pos_2(2:3)];
+%     accel_dir = accel_dir/norm(accel_dir);
+%     target_accel = acc*accel_dir;
+%     
+    vel_body_norm = DCM'*vel/norm(vel);
+    
+    % Angle between velocity vector and target
+    nu = acos(dot(vel_body_norm, target_pos_2)/dist);
     r = dist/(2*sin(nu));
     acc = V^2/r;
-    accel_dir = [0; target_pos_2(2:3)];
+    accel_dir = cross(cross(vel_body_norm, target_pos_2, 1), vel_body_norm, 1);
     accel_dir = accel_dir/norm(accel_dir);
     target_accel = acc*accel_dir;
     
     % Now calculate roll angle
-    req_lift = target_accel - DCM'*[0;0;-g];
+    gravity_rel = DCM'*[0;0;-g];
+    req_lift = target_accel - gravity_rel;
     
     % Angle error
     roll_err = asin(-req_lift(2)/norm(req_lift));
@@ -83,6 +94,8 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
 
     [roll,pitch,heading] = DCMToEuler_ENU(DCM);
 
+    target_accel_earth = DCM*target_accel;
+            
     if plotFlag
         close all
         figure; hold on;
@@ -96,8 +109,10 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
         plot3([pos(1),target_pos(1)], [pos(2),target_pos(2)],[pos(3),target_pos(3)],'r-o')
         
         % Plot target acceleration vector.
-        target_accel_earth = DCM*target_accel;
         quiver3(pos(1),pos(2),pos(3),target_accel_earth(1),target_accel_earth(2),target_accel_earth(3));
+        
+        % Plot gravity vector.
+        quiver3(pos(1),pos(2),pos(3),0,0,-g);
         
         % Plot target lift vector.
         target_lift_earth = DCM*req_lift;
@@ -113,7 +128,7 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
         view(3);
         axis tight;
         
-        legend('Target traj','Target point','Vec to target','Target acc','Target lift');
+        legend('Target traj','Target point','Vec to target','Target acc','Gravity','Target lift');
         
         % Plot in ac frame of reference.
         figure; hold on;
@@ -131,6 +146,9 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
         
         % Plot target acceleration vector.
         quiver3(0,0,0,target_accel(1),target_accel(2),target_accel(3));
+
+        % Plot target lift vector.
+        quiver3(0,0,0,gravity_rel(1),gravity_rel(2),gravity_rel(3));
         
         % Plot target lift vector.
         quiver3(0,0,0,req_lift(1),req_lift(2),req_lift(3));
@@ -146,11 +164,11 @@ function [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel,
         
         axis tight;
         
-        legend('Target traj','Target point','Vec to target','Target acc','Target lift');
+        legend('Target traj','Target point','Vec to target','Target acc','Gravity','Target lift');
          %End    
     end
     
-    fprintf('Roll %3.1f Pitch %3.1f Yaw %3.1f\n', rad2deg(roll), rad2deg(pitch), rad2deg(heading));
+%     fprintf('Roll %3.1f Pitch %3.1f Yaw %3.1f\n', rad2deg(roll), rad2deg(pitch), rad2deg(heading));
 end
 
 function p = trajectory_eval(traj, t)

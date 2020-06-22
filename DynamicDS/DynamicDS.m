@@ -22,9 +22,13 @@ clear;
 
 V   = 20; %m/s
 g   = 9.81;
-Vw  = 0; %m/s at 10m
+Vw  = 3; %m/s at 10m
 
-% Assume 3 degrees alpha for level 1G flight at V.
+% Some assumed figures.
+CLK = 1.0*2*pi/4.0; % S*CLalpha/mass
+CDK = 1.0*0.02/4.0; % S*D/mass
+
+% dGdAlpha = 9.81/(0.5*1.225*V^2*CLK);
 dGdAlpha = g/deg2rad(3);
 
 % Initial conditions
@@ -38,6 +42,8 @@ if (1)
     pitch   = 0;
     heading = 0;
     accelreq = sqrt((V^2/trajSpec.R)^2 + 9.81^2);
+    qdyn = 0.5*1.225*V^2;
+%     alpha_trim   = accelreq/(qdyn*CLK);
     alpha_trim   = accelreq/dGdAlpha;
 else
     % Flat turn.
@@ -74,7 +80,7 @@ dt = 0.01;
 
 plotFlag = true;
 
-N = 2000;
+N = 5000;
 Pos       = zeros(N,3);
 Vel       = zeros(N,3);
 V_rel     = zeros(N,3);
@@ -83,15 +89,18 @@ Accel     = zeros(N,3);
 ZDir      = zeros(N,3);
 Rates     = zeros(N,3);
 AlphaBeta = zeros(N,2);
+TargetAccel =  zeros(N,3);
 
 iBeta = 0.8;
+
+tShow = 14.11;
 
 for iT=1:N
     
     DCM = QuaternionToDCM(q)';
     
-    plotFlag = 0;%mod(iT,100)==0;
-    [pitch_rate, roll_rate, target_pos] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec);
+    plotFlag = tShow == iT*dt;
+    [pitch_rate, roll_rate, target_pos, target_accel] = calculate_guidance(DCM, pos, vel, g, plotFlag, trajSpec);
 
     body_rates = [roll_rate; -pitch_rate; 0];
 
@@ -115,9 +124,15 @@ for iT=1:N
    
     % Determine lift force direction.
     % Perpendicular to velocity and to aircraft y axis.
+%     lift_vec = cross(vel_air, DCM(:,2));
     lift_vec = cross(vel, DCM(:,2));
     lift_vec = lift_vec/norm(lift_vec);
     
+%     qdyn = 0.5*1.225*norm(vel_air)^2;
+%     lift = lift_vec * qdyn*CLK*alpha;
+%     drag = vel_air/norm(vel_air) * qdyn * CDK;
+%     accel = lift + [0;0;-g] + drag;
+
     accel = lift_vec*dGdAlpha*(alpha + alpha_trim) + [0;0;-g];
     accel = accel + vel_air/norm(vel_air) * (norm(vel_air) - V);
     
@@ -134,6 +149,12 @@ for iT=1:N
     ZDir(iT,:) = DCM(:,3)';
     Rates(iT,:) = body_rates';
     AlphaBeta(iT,:) = [alpha, beta];
+    TargetAccel(iT,:) = target_accel;
+
+end
+
+for iT=1:length(Pos)
+    Error(iT,1) = sqrt(min(sum((Target - Pos(iT,:)).^2,2)));
 end
 
 Time = (1:N)*dt;
@@ -144,17 +165,51 @@ xlabel('x [m]'); ylabel('y [m]'); zlabel('z [m]');
 plot3(Target(:,1), Target(:,2), Target(:,3),'r');
 axis equal;
 
+idx = find(Time==tShow,1,'first');
+plot3([Pos(idx,1),Target(idx,1)],[Pos(idx,2),Target(idx,2)],[Pos(idx,3),Target(idx,3)],'r--');
+
 figure;
 
 subplot(3,1,1); plot(Time, sqrt(sum(Vel.^2,2)));
 xlabel('Time [s]'); ylabel('Velocity [m/s]');
 grid on; grid minor;
 
-subplot(3,1,2); plot(Time, sqrt(sum(Pos.^2,2)));
-xlabel('Time [s]'); ylabel('Position [m/s]');
+subplot(3,1,2); plot(Time, Pos(:,3));
+xlabel('Time [s]'); ylabel('Height [m]');
 grid on; grid minor;
 
 subplot(3,1,3); plot(Time, rad2deg(AlphaBeta));
 xlabel('Time [s]'); ylabel('Angle [deg]');
 grid on; grid minor;
 legend('Alpha','Beta');
+
+figure;
+plot(Time, Target(:,1), Time, Target(:,2), Time, Target(:,3));
+title('Target coordinates');
+xlabel('Time [s]'); ylabel('Position [m]');
+grid on; grid minor;
+
+figure;
+plot(Time, Rates(:,1), Time, -Rates(:,2), Time, Rates(:,3));
+title('Target body rates');
+legend('Roll','Pitch','Yaw');
+xlabel('Time [s]'); ylabel('Rates [rad/s]');
+grid on; grid minor;
+
+figure;
+plot(Time, Accel(:,1), Time, Accel(:,2), Time, Accel(:,3));
+hold on;
+set(gca,'ColorOrderIndex',1);
+plot(Time, TargetAccel(:,1),'--', Time, TargetAccel(:,2),'--', Time, TargetAccel(:,3),'--');
+title('Accelerations');
+legend('X','Y','Z');
+xlabel('Time [s]'); ylabel('Accel [m/s/s]');
+grid on; grid minor;
+
+figure,
+plot(Time,Error);
+xlabel('Time [s]'); ylabel('Error [m]');
+grid on; grid minor;
+
+fprintf('Mean error %3.2f max %3.2f\n', mean(Error),max(Error));
+
