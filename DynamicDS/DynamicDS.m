@@ -22,7 +22,7 @@ clear;
 
 V   = 20; %m/s
 g   = 9.81;
-Vw  = 3; %m/s at 10m
+Vw  = 0; %m/s at 10m
 
 % Some assumed figures.
 CLK = 1.0*2*pi/4.0; % S*CLalpha/mass
@@ -124,8 +124,8 @@ for iT=1:N
    
     % Determine lift force direction.
     % Perpendicular to velocity and to aircraft y axis.
-%     lift_vec = cross(vel_air, DCM(:,2));
-    lift_vec = cross(vel, DCM(:,2));
+    lift_vec = cross(-vel_air, DCM(:,2));
+%     lift_vec = cross(vel, DCM(:,2));
     lift_vec = lift_vec/norm(lift_vec);
     
 %     qdyn = 0.5*1.225*norm(vel_air)^2;
