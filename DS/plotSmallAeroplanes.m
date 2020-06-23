@@ -46,8 +46,8 @@ function h = plotSmallAeroplanes(ax, x, y, z, heading, roll, pitch, idx)
               sin(pitch(i)), 0,  cos(pitch(i))];
 
         % Rotate about z by heading.
-        T3 = [cos(heading(i)), sin(heading(i)), 0; 
-             -sin(heading(i)), cos(heading(i)), 0;
+        T3 = [cos(heading(i)),-sin(heading(i)), 0;
+              sin(heading(i)), cos(heading(i)), 0;
                             0,               0, 1];
 
         T = T3*T2*T1;
