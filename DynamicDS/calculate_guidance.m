@@ -63,7 +63,8 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
     % Angle between x axis and vector to target.
     dist = norm(target_pos_2);
  
-    vel_body_norm = DCM'*vel/norm(vel);
+    vel_body = DCM'*vel;
+    vel_body_norm = vel_body/norm(vel_body);
     
     % Angle between velocity vector and target
     nu = acos(dot(vel_body_norm, target_pos_2)/dist);
