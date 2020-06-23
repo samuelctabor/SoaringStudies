@@ -20,7 +20,7 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
     traj.w  = 2*pi*(1/6);
 
     % Find the point on trajectory the correct distance ahead.
-    L1 = 0.8*norm(vel);
+    L1 = 0.5*norm(vel);
     
     V = norm(vel);
     
@@ -79,12 +79,12 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
     req_lift = target_accel - gravity_rel;
     
     % Angle error
-    roll_err = asin(-req_lift(2)/norm(req_lift));
+    roll_err = atan2(req_lift(2), req_lift(3));
     
-    roll_rate = roll_err/roll_tau;
+    roll_rate = -roll_err/roll_tau;
     
     % Now pitch rate
-    relative_roll = asin(-target_accel(2)/norm(target_accel));
+    relative_roll = atan2(target_accel(2),target_accel(3));
     pitch_rate = cos(relative_roll)*acc/V;
 
     [roll,pitch,heading] = DCMToEuler_ENU(DCM);
