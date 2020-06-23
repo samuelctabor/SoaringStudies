@@ -112,6 +112,9 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
         target_lift_earth = DCM*req_lift;
         quiver3(pos(1),pos(2),pos(3),target_lift_earth(1),target_lift_earth(2),target_lift_earth(3));
         
+        % Plot velocity vector
+        quiver3(pos(1),pos(2),pos(3),vel(1),vel(2),vel(3));
+        
         % Plot model
         plotSmallAeroplanes(gca, pos(1), pos(2), pos(3), heading, roll, pitch, 1);
         
@@ -122,7 +125,7 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
         view(3);
         axis tight;
         
-        legend('Target traj','Target point','Vec to target','Target acc','Gravity','Target lift');
+        legend('Target traj','Target point','Vec to target','Target acc','Gravity','Target lift','Velocity');
         
         % Plot in ac frame of reference.
         figure; hold on;
@@ -147,6 +150,9 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
         % Plot target lift vector.
         quiver3(0,0,0,req_lift(1),req_lift(2),req_lift(3));
         
+        % Plot velocity
+        quiver3(0,0,0,vel_body(1),vel_body(2),vel_body(3));
+        
         % Plot model
         plotSmallAeroplanes(gca, 0,0,0, 0,0,0, 1);
         
@@ -158,7 +164,7 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
         
         axis tight;
         
-        legend('Target traj','Target point','Vec to target','Target acc','Gravity','Target lift');
+        legend('Target traj','Target point','Vec to target','Target acc','Gravity','Target lift','Velocity');
          %End    
     end
     
