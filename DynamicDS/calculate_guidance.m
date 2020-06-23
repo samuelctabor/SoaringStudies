@@ -62,13 +62,7 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
     % We need a target acceleration vector to pass through the target.
     % Angle between x axis and vector to target.
     dist = norm(target_pos_2);
-%     nu = acos(dot([1;0;0], target_pos_2)/dist);
-%     r = dist/(2*sin(nu));
-%     acc = V^2/r;
-%     accel_dir = [0; target_pos_2(2:3)];
-%     accel_dir = accel_dir/norm(accel_dir);
-%     target_accel = acc*accel_dir;
-%     
+ 
     vel_body_norm = DCM'*vel/norm(vel);
     
     % Angle between velocity vector and target
