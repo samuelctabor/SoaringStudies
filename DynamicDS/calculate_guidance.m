@@ -20,7 +20,7 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
     traj.w  = 2*pi*(1/6);
 
     % Find the point on trajectory the correct distance ahead.
-    L1 = 2*norm(vel);
+    L1 = 0.8*norm(vel);
     
     V = norm(vel);
     

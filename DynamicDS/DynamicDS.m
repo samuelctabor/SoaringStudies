@@ -22,14 +22,14 @@ clear;
 
 V   = 20; %m/s
 g   = 9.81;
-Vw  = 0; %m/s at 10m
+Vw  = 5; %m/s at 10m
 
 % Some assumed figures.
-CLK = 1.0*2*pi/4.0; % S*CLalpha/mass
-CDK = 1.0*0.02/4.0; % S*D/mass
+CLK = 1.0*2*pi/8.0; % S*CLalpha/mass
+CDK = 1.0*0.02/8.0; % S*D/mass
 
-% dGdAlpha = 9.81/(0.5*1.225*V^2*CLK);
-dGdAlpha = g/deg2rad(3);
+qdyn = 0.5*1.225*V^2;
+dGdAlpha = qdyn*CLK;
 
 % Initial conditions
 % 20 deg inclination, small error
@@ -42,9 +42,7 @@ if (1)
     pitch   = 0;
     heading = 0;
     accelreq = sqrt((V^2/trajSpec.R)^2 + 9.81^2);
-    qdyn = 0.5*1.225*V^2;
-%     alpha_trim   = accelreq/(qdyn*CLK);
-    alpha_trim   = accelreq/dGdAlpha;
+    alpha_trim   = accelreq/(qdyn*CLK);
 else
     % Flat turn.
     trajSpec.inclination = 0;
@@ -125,17 +123,15 @@ for iT=1:N
     % Determine lift force direction.
     % Perpendicular to velocity and to aircraft y axis.
     lift_vec = cross(-vel_air, DCM(:,2));
-%     lift_vec = cross(vel, DCM(:,2));
     lift_vec = lift_vec/norm(lift_vec);
     
-%     qdyn = 0.5*1.225*norm(vel_air)^2;
-%     lift = lift_vec * qdyn*CLK*alpha;
-%     drag = vel_air/norm(vel_air) * qdyn * CDK;
-%     accel = lift + [0;0;-g] + drag;
-
-    accel = lift_vec*dGdAlpha*(alpha + alpha_trim) + [0;0;-g];
-    accel = accel + vel_air/norm(vel_air) * (norm(vel_air) - V);
+    qdyn = 0.5*1.225*norm(vel_air)^2;
+    lift = lift_vec * qdyn*CLK*alpha;
     
+    drag = vel_air/norm(vel_air) * (norm(vel_air) - V);
+
+    accel = lift + [0;0;-g] + drag;
+
     q = q + q_rates*dt;
     
     pos = pos+vel*dt;
@@ -211,5 +207,5 @@ plot(Time,Error);
 xlabel('Time [s]'); ylabel('Error [m]');
 grid on; grid minor;
 
-fprintf('Mean error %3.2f max %3.2f\n', mean(Error),max(Error));
+fprintf('Mean error %3.2f max %3.2f\n', mean(Error(Time>5)),max(Error(Time>5)));
 
