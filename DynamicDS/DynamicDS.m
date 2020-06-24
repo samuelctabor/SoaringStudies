@@ -90,6 +90,7 @@ ZDir      = zeros(N,3);
 Rates     = zeros(N,3);
 AlphaBeta = zeros(N,2);
 TargetAccel =  zeros(N,3);
+Coeffs    = zeros(N,2);
 
 iBeta = 0.8;
 
@@ -128,9 +129,11 @@ for iT=1:N
     lift_vec = lift_vec/norm(lift_vec);
     
     qdyn = 0.5*1.225*norm(vel_air)^2;
-    lift = lift_vec * qdyn*CLalpha*alpha/wingLoad;
+    CL = CLalpha*alpha;
+    lift = lift_vec * qdyn*CL/wingLoad;
     
-    drag = vel_air/norm(vel_air) * qdyn*(CD0 + CDi*(CLalpha*alpha)^2)/wingLoad;
+    CD = CD0 + CDi*CL^2;
+    drag = vel_air/norm(vel_air) * qdyn*CD/wingLoad;
 
     accel = lift + [0;0;-g] + drag;
 
@@ -143,11 +146,12 @@ for iT=1:N
     V_rel(iT,:) = v_rel;
     Pos(iT,:) = pos';
     Target(iT,:) = target_pos';
-    Accel(iT,:) = accel';
+    Accel(iT,:) = (DCM'*accel)';
     ZDir(iT,:) = DCM(:,3)';
     Rates(iT,:) = body_rates';
     AlphaBeta(iT,:) = [alpha, beta];
-    TargetAccel(iT,:) = target_accel;
+    TargetAccel(iT,:) = (DCM'*target_accel);
+    Coeffs(iT,:) = [CL,CD];
 
 end
 
@@ -210,4 +214,10 @@ xlabel('Time [s]'); ylabel('Error [m]');
 grid on; grid minor;
 
 fprintf('Mean error %3.2f max %3.2f\n', mean(Error(Time>5)),max(Error(Time>5)));
+
+figure,
+plot(Time,Coeffs);
+xlabel('Time [s]'); ylabel('Coefficient []');
+grid on; grid minor;
+legend('CL','CD');
 

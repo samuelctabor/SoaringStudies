@@ -26,7 +26,7 @@ function [pitch_rate, roll_rate, target_pos, target_accel_earth] = calculate_gui
     
     roll_tau = 0.1;
     
-    t = linspace(0,6,1000);
+    t = linspace(0,6,10000);
     t  =t(1:end-1);
     
     p = trajectory_eval(traj, t);
